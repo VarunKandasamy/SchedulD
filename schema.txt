@@ -1,0 +1,12 @@
+What the database needs to be able to do:
+keep track of each user and their set of courses
+needs to keep track of all courses, including their prefixes and course number
+
+Idea:
+create a table for the department for each course. It will have a serial for the id and a char for the course prefix (ex: 'COEN', 'ELEN', 'ENGL', etc.) 
+
+create another table to keep track of the courses that are available. each course will consists of a name field (VARCHAR), and a Department tab(which maps to the department table)
+
+create a 3rd table for the student. This tab will keep track of student information. The student will have a serial id, a name, and an email
+
+finally, there will be a table for enrollment. each enrollment must have a unique (studnet, course) which will be used as the tables primary key. 
