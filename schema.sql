@@ -1,0 +1,24 @@
+CREATE TABLE department(
+  id SERIAL PRIMARY KEY,
+  prefix CHAR(4) UNIQUE NOT NULL
+);
+
+CREATE TABLE course(
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(128) NOT NULL,
+  courseNumber INTEGER NOT NULL,
+  departmentID INTEGER NOT NULL REFERENCES department(id) ON DELETE CASCADE,
+  UNIQUE (courseNumber, departmentID)
+);
+
+CREATE TABLE student(
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(128) NOT NULL,
+  email VARCHAR(128)
+);
+
+CREATE TABLE enrollment(
+  studentID INTEGER NOT NULL REFERENCES student(id) ON DELETE CASCADE,
+  courseID INTEGER NOT NULL REFERENCES course(id) ON DELETE CASCADE,
+  PRIMARY KEY(studentID, courseID)
+);
