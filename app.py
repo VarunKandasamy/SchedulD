@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template
+from flask_cors import CORS
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -6,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 conn = psycopg2.connect(
     host=os.getenv('host'),
     database=os.getenv('database'),
@@ -48,14 +50,15 @@ def storeCourse():
     #Need to first check if the department exists. If it doesn't, create an entry for it
     cur.execute("SELECT count(*) FROM department WHERE prefix=%s;", (department,))
     if(cur.fetchone()[0] == 0):
-        cur.execute("INSERT INTO department prefix VALUES %s", (department,))
+        cur.execute("INSERT INTO department (prefix) VALUES (%s)", (department,))
         conn.commit()
-    
+        print("inserted dept prefix")
     cur.execute("SELECT id FROM department WHERE prefix=%s;", (department,))
     deptID = cur.fetchone()[0]
+    print(deptID)
     
     #need to come back and handle failure
-    cur.execute("INSERT INTO course VALUES (%s, %s, %s)", (name, courseNumber, department))
+    cur.execute("INSERT INTO course (name, courseNumber, departmentID) VALUES (%s, %s, %s)", (name, courseNumber, deptID))
     conn.commit()
     cur.close()
     return "Success", 200
@@ -78,7 +81,7 @@ def storeEnrollment():
     courseID = cur.fetchone()[0]
 
     #need to come back and handle failure
-    cur.execute("INSERT INTO enrolment (studentID, courseID) VALUES (%s, %s)", (studentID, courseID))
+    cur.execute("INSERT INTO enrollment (studentID, courseID) VALUES (%s, %s)", (studentID, courseID))
     conn.commit()
     cur.close()
     return "Success", 200
@@ -116,7 +119,7 @@ def removeCourse():
     courseID=cur.fetchone()[0]
 
     #need to come back and handle failure
-    cur.execute("DELETE FROM course WHERE id=%s", courseID)
+    cur.execute("DELETE FROM course WHERE id=%s", (courseID,))
     conn.commit()
     cur.close()
     return "Success", 200
@@ -139,8 +142,10 @@ def removeEnrollment():
     courseID=cur.fetchone()[0]
 
     #need to come back and handle failure
-    cur.execute("DELETE FROM enrolment WHERE studentID=%s AND courseID=%s", (studentID, courseID))
+    cur.execute("DELETE FROM enrollment WHERE studentID=%s AND courseID=%s", (studentID, courseID))
     conn.commit()
     cur.close()
     return "Success", 200
 
+if __name__ == "__main__":
+    app.run(debug=True)
