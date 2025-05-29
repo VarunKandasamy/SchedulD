@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>College Planner Test UI</title>
+  <style>
+    body { font-family: Arial; margin: 2rem; }
+    section { margin-bottom: 2rem; }
+    input, button { margin: 0.25rem 0; padding: 0.5rem; }
+    .response { margin-top: 0.5rem; color: green; }
+  </style>
+</head>
+<body>
+  <h1>College Course Planner - Test Interface</h1>
+
+  <section>
+    <h2>Store Student</h2>
+    <input id="studentName" placeholder="Name">
+    <input id="studentEmail" placeholder="Email">
+    <button onclick="storeStudent()">Submit</button>
+    <div class="response" id="studentResp"></div>
+  </section>
+
+  <section>
+    <h2>Store Course</h2>
+    <input id="courseName" placeholder="Course Name">
+    <input id="courseNumber" placeholder="Course Number">
+    <input id="courseDept" placeholder="Department (4 letters)">
+    <button onclick="storeCourse()">Submit</button>
+    <div class="response" id="courseResp"></div>
+  </section>
+
+  <section>
+    <h2>Store Enrollment</h2>
+    <input id="enrollStudentId" placeholder="Student ID">
+    <input id="enrollNumber" placeholder="Course Number">
+    <input id="enrollDept" placeholder="Department">
+    <button onclick="storeEnrollment()">Submit</button>
+    <div class="response" id="enrollResp"></div>
+  </section>
+
+  <section>
+    <h2>Remove Student</h2>
+    <input id="removeStudentId" placeholder="Student ID">
+    <button onclick="removeStudent()">Remove</button>
+    <div class="response" id="removeStudentResp"></div>
+  </section>
+
+  <section>
+    <h2>Remove Course</h2>
+    <input id="removeNumber" placeholder="Course Number">
+    <input id="removeDept" placeholder="Department">
+    <button onclick="removeCourse()">Remove</button>
+    <div class="response" id="removeCourseResp"></div>
+  </section>
+
+  <section>
+    <h2>Remove Enrollment</h2>
+    <input id="removeEnrollStudentId" placeholder="Student ID">
+    <input id="removeEnrollNumber" placeholder="Course Number">
+    <input id="removeEnrollDept" placeholder="Department">
+    <button onclick="removeEnrollment()">Remove</button>
+    <div class="response" id="removeEnrollResp"></div>
+  </section>
+
+  <script>
+    const base = "http://localhost:5000"; // Change this if hosted elsewhere
+
+    function makeRequest(route, params, targetId) {
+      const query = new URLSearchParams(params).toString();
+      fetch(`${base}/${route}?${query}`)
+        .then(res => res.text())
+        .then(text => document.getElementById(targetId).textContent = text)
+        .catch(err => document.getElementById(targetId).textContent = 'Error: ' + err);
+    }
+
+    function storeStudent() {
+      makeRequest("storeStudent", {
+        name: document.getElementById("studentName").value,
+        email: document.getElementById("studentEmail").value
+      }, "studentResp");
+    }
+
+    function storeCourse() {
+      makeRequest("storeCourse", {
+        name: document.getElementById("courseName").value,
+        number: document.getElementById("courseNumber").value,
+        department: document.getElementById("courseDept").value
+      }, "courseResp");
+    }
+
+    function storeEnrollment() {
+      makeRequest("storeEnrollment", {
+        studentID: document.getElementById("enrollStudentId").value,
+        number: document.getElementById("enrollNumber").value,
+        department: document.getElementById("enrollDept").value
+      }, "enrollResp");
+    }
+
+    function removeStudent() {
+      makeRequest("removeStudent", {
+        studentID: document.getElementById("removeStudentId").value
+      }, "removeStudentResp");
+    }
+
+    function removeCourse() {
+      makeRequest("removeCourse", {
+        number: document.getElementById("removeNumber").value,
+        department: document.getElementById("removeDept").value
+      }, "removeCourseResp");
+    }
+
+    function removeEnrollment() {
+      makeRequest("removeEnrollment", {
+        studentID: document.getElementById("removeEnrollStudentId").value,
+        number: document.getElementById("removeEnrollNumber").value,
+        department: document.getElementById("removeEnrollDept").value
+      }, "removeEnrollResp");
+    }
+  </script>
+</body>
+</html>
