@@ -19,12 +19,12 @@ conn = psycopg2.connect(
 def home():
     return render_template('index.html')
 
-@app.route('/storeStudent')
+@app.route('/students', methods=['POST'])
 def storeStudent():
-    query = request.args
+    query = request.get_json()
 
-    name = request.args.get('name')
-    email = request.args.get('email')
+    name = query.get('name')
+    email = query.get('email')
     if name == None:
         return "invalid name", 400
     cur = conn.cursor()
@@ -32,16 +32,20 @@ def storeStudent():
     #need to come back and handle failure
     cur.execute("INSERT INTO student (name, email) VALUES (%s, %s);", (name, email))
     conn.commit()
+    cur.execute("SELECT id FROM student WHERE name=%s AND email=%s LIMIT 1;", (name,email))
+    yourID= cur.fetchone()[0]
     cur.close()
-    return "Success", 200
-    
-@app.route('/storeCourse')
-def storeCourse():
-    query = request.args
 
-    name = request.args.get('name')
-    courseNumber = request.args.get('number')
-    department = request.args.get('department')
+    strID = "Keep this safe. Your ID is: " + str(yourID)
+    return strID, 200
+    
+@app.route('/courses', methods=['POST'])
+def storeCourse():
+    query = request.get_json()
+
+    name = query.get('name')
+    courseNumber = query.get('number')
+    department = query.get('department')
 
     if name == None or courseNumber == None or department == None or len(department) != 4:
         return "invalid inputs", 400
@@ -63,13 +67,13 @@ def storeCourse():
     cur.close()
     return "Success", 200
  
-@app.route('/storeEnrollment')
+@app.route('/enrollments', methods=['POST'])
 def storeEnrollment():
-    query = request.args
+    query = request.get_json()
 
-    studentID = request.args.get('studentID')
-    courseNumber = request.args.get('number')
-    department = request.args.get('department')
+    studentID = query.get('studentID')
+    courseNumber = query.get('number')
+    department = query.get('department')
 
     if studentID == None or courseNumber == None or department == None or len(department) != 4:
         return "invalid inputs", 400
@@ -86,11 +90,8 @@ def storeEnrollment():
     cur.close()
     return "Success", 200
 
-@app.route('/removeStudent')
-def removeStudent():
-    query = request.args
-
-    studentID = request.args.get('studentID')
+@app.route('/students/<int:studentID>',methods=['DELETE'])
+def removeStudent(studentID):
     if studentID == None:
         return "invalid name", 400
     cur = conn.cursor()
@@ -102,12 +103,12 @@ def removeStudent():
     return "Success", 200
 
    
-@app.route('/removeCourse')
+@app.route('/courses',methods=['DELETE'])
 def removeCourse():
-    query = request.args
+    query = request.get_json()
 
-    courseNumber = request.args.get('number')
-    department = request.args.get('department')
+    courseNumber = query.get('number')
+    department = query.get('department')
 
     if courseNumber == None or department == None or len(department) != 4:
         return "invalid inputs", 400
@@ -124,13 +125,13 @@ def removeCourse():
     cur.close()
     return "Success", 200
 
-@app.route('/removeEnrollment')
+@app.route('/enrollments', methods=['DELETE'])
 def removeEnrollment():
-    query = request.args
+    query = request.get_json()
 
-    studentID = request.args.get('studentID')
-    courseNumber = request.args.get('number')
-    department = request.args.get('department')
+    studentID = query.get('studentID')
+    courseNumber = query.get('number')
+    department = query.get('department')
 
     if studentID == None or courseNumber == None or department == None or len(department) != 4:
         return "invalid inputs", 400
@@ -145,6 +146,78 @@ def removeEnrollment():
     cur.execute("DELETE FROM enrollment WHERE studentID=%s AND courseID=%s", (studentID, courseID))
     conn.commit()
     cur.close()
+    return "Success", 200
+
+@app.route('/students/<int:studentID>', methods=['GET'])
+def readStudent(studentID):
+    cur=conn.cursor()
+    cur.execute("SELECT name, email FROM student WHERE id=%s LIMIT 1",(studentID,))
+    data = cur.fetchone()
+    cur.close()
+    
+    if data is None:
+        return "Could not find student", 400
+    return {"name": data[0],"email": data[1]}, 200
+
+@app.route('/courses/find', methods=['POST'])
+def readSingleCourse():
+    query = request.get_json()
+    courseID=query.get('number')
+    deptID=query.get('department')
+
+    cur=conn.cursor()
+    cur.execute("SELECT name FROM course WHERE courseNumber=%s AND departmentID=%s LIMIT 1",(courseID, deptID))
+    data=cur.fetchone()
+    cur.close()
+
+    if data is None:
+        return "Could not find any matching courses", 400
+    return {"name": data[0]}, 200
+
+@app.route('/enrollments', methods=['GET'])
+def readAllEnrollment():
+    cur=conn.cursor()
+    cur.execute("SELECT * FROM enrollment")
+    data=cur.fetchall()
+    cur.close()
+
+    if data is None:
+        return "Could not find any enrollments", 400
+    return {"enrollments": [{"courseID":row[0], "studentID": row[1]} for row in data]}, 200
+
+@app.route('/students/<int:studentID>', methods=['PUT'])
+def updateStudent(studentID):
+    cur=conn.cursor()
+    query = request.get_json()
+    name = query.get('name')
+    email = query.get('email')
+
+    if name is None and email is None:
+        return "No fields provided", 400
+
+    if name and email:
+        cur.execute("UPDATE student SET name=%s, email=%s WHERE id=%s", (name, email, studentID))
+    elif name:
+        cur.execute("UPDATE student SET name=%s WHERE id=%s", (name, studentID))
+    else:
+        cur.execute("UPDATE student SET email=%s WHERE id=%s", (email, studentID))
+    conn.commit()
+    cur.close()
+    
+    return "Success", 200
+
+@app.route('/courses', methods=['PUT'])
+def updateCourse():
+    query = request.get_json()
+    name=query.get('name')
+    courseID=query.get('number')
+    deptID=query.get('department')
+
+    cur=conn.cursor()
+    cur.execute("UPDATE course SET name=%s WHERE courseNumber=%s AND departmentID=%s",(name,courseID, deptID))
+    conn.commit()
+    cur.close()
+
     return "Success", 200
 
 if __name__ == "__main__":
