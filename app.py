@@ -165,7 +165,13 @@ def readSingleCourse():
     courseID=query.get('number')
     deptID=query.get('department')
 
+    if not courseID or not deptID:
+        return "Both courseID and departmentID are required", 400
+
     cur=conn.cursor()
+    cur.execute("SELECT id FROM department WHERE prefix=%s;", (deptID,))
+    deptID=cur.fetchone()[0]
+
     cur.execute("SELECT name FROM course WHERE courseNumber=%s AND departmentID=%s LIMIT 1",(courseID, deptID))
     data=cur.fetchone()
     cur.close()
@@ -183,7 +189,7 @@ def readAllEnrollment():
 
     if data is None:
         return "Could not find any enrollments", 400
-    return {"enrollments": [{"courseID":row[0], "studentID": row[1]} for row in data]}, 200
+    return {"enrollments": [{"courseID":row[1], "studentID": row[0]} for row in data]}, 200
 
 @app.route('/students/<int:studentID>', methods=['PUT'])
 def updateStudent(studentID):
@@ -214,6 +220,8 @@ def updateCourse():
     deptID=query.get('department')
 
     cur=conn.cursor()
+    cur.execute("SELECT id FROM department WHERE prefix=%s;", (deptID,))
+    deptID=cur.fetchone()[0]
     cur.execute("UPDATE course SET name=%s WHERE courseNumber=%s AND departmentID=%s",(name,courseID, deptID))
     conn.commit()
     cur.close()
